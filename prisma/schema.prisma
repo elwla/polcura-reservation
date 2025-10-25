@@ -1,0 +1,87 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(ADMIN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Cabin {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String
+  capacity    Int
+  price       Float
+  image       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reservations Reservation[]
+  amenities    CabinAmenity[]  // Relación con amenities
+
+  @@map("cabins")
+}
+
+model CabinAmenity {
+  id      Int    @id @default(autoincrement())
+  name    String
+  cabinId Int
+  cabin   Cabin  @relation(fields: [cabinId], references: [id], onDelete: Cascade)
+
+  @@unique([cabinId, name])
+  @@map("cabin_amenities")
+}
+
+model Reservation {
+  id          Int      @id @default(autoincrement())
+  cabinId     Int
+  startDate   DateTime
+  endDate     DateTime
+  guestName   String
+  guestEmail  String
+  guestPhone  String
+  numberOfGuests Int
+  totalPrice  Float
+  status      ReservationStatus @default(PENDING)
+  specialRequests String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cabin Cabin @relation(fields: [cabinId], references: [id], onDelete: Cascade)
+
+  @@map("reservations")
+}
+
+model SystemConfig {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String
+
+  @@map("system_config")
+}
+
+enum UserRole {
+  ADMIN
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  CANCELLED
+}
